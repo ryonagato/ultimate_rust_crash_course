@@ -1,3 +1,4 @@
+use rand::Rng;
 // 1. Define a trait named `Bite`
 //
 // Define a single required method, `fn bite(self: &mut Self)`.  We will call this method when we
@@ -5,6 +6,9 @@
 // `cargo run` without any errors.
 //
 //  trait Bite...
+trait Bite{
+    fn bite(self: &mut Self);
+}
 
 
 // 2. Now create a struct named Grapes with a field that tracks how many grapes are left.  If you
@@ -13,13 +17,21 @@
 //
 // #[derive(Debug)] // include this line right before your struct definition
 // struct Grapes...
+#[derive(Debug)]
+struct Grapes{
+    grape_left:i32,
+}
 
 
 // 3. Implement Bite for Grapes.  When you bite a Grapes, subtract 1 from how many grapes are left.
 // If you need a hint, look at how it was done for Carrot at the bottom of this file.
 //
 // impl Bite for...
-
+impl Bite for Grapes{
+    fn bite(self: &mut Self){
+        self.grape_left-=1;
+    } 
+}
 
 fn main() {
     // Once you finish #1 above, this part should work.
@@ -30,9 +42,9 @@ fn main() {
     // 4. Uncomment and adjust the code below to match how you defined your
     // Grapes struct.
     //
-    //let mut grapes = Grapes { amount_left: 100 };
-    //grapes.bite();
-    //println!("Eat a grape: {:?}", grapes);
+    let mut grapes = Grapes { grape_left: 100 };
+    grapes.bite();
+    println!("Eat a grape: {:?}", grapes);
 
     // Challenge: Uncomment the code below. Create a generic `bunny_nibbles`
     // function that:
@@ -41,9 +53,13 @@ fn main() {
     // Hint: Define the generic type between the function name and open paren:
     //       fn function_name<T: Bite>(...)
     //
-    //bunny_nibbles(&mut carrot);
-    //println!("Bunny nibbles for awhile: {:?}", carrot);
+    let carrot_nibble = bunny_nibbles(&mut carrot);
+    println!("Bunny nibbles carrot {:?} times : {:?}", carrot_nibble, carrot);
+
+    let grape_nibble = bunny_nibbles(&mut grapes);
+    println!("Bunny nibbles grapes {:?} times : {:?}", grape_nibble, grapes);
 }
+
 
 #[derive(Debug)] // This enables using the debugging format string "{:?}"
 struct Carrot {
@@ -55,4 +71,14 @@ impl Bite for Carrot {
         // Eat 20% of the remaining carrot. It may take awhile to eat it all...
         self.percent_left *= 0.8;
     }
+}
+
+
+
+fn bunny_nibbles<T: Bite>(item: &mut T) -> i32 {
+    let rand_nibble = rand::thread_rng().gen_range(1..11);
+    for _num in 1..=rand_nibble{
+        item.bite();
+    }
+    return rand_nibble;
 }
