@@ -24,6 +24,8 @@
 // message). It works with any integer or float type.
 //
 //     let positive_number: u32 = some_string.parse().expect("Failed to parse a number");
+use image::DynamicImage;
+use std::io::{self, Write};
 
 fn main() {
     // 1. First, you need to implement some basic command-line argument handling
@@ -52,18 +54,60 @@ fn main() {
 
         // **OPTION**
         // Brighten -- see the brighten() function below
+        "brighten" => {
+            if args.len() !=2{
+                print_usage_and_exit();
+            }
+            let infile = args.remove(0);
+            let outfile = args.remove(0);
+            // **OPTION**
+            // Improve the blur implementation -- see the blur() function below
+            brighten(infile, outfile);            
+        }
 
         // **OPTION**
         // Crop -- see the crop() function below
+        "crop" => {
+            if args.len() !=2{
+                print_usage_and_exit();
+            }
+            let infile = args.remove(0);
+            let outfile = args.remove(0);
+            crop(infile, outfile);            
+        }        
 
         // **OPTION**
         // Rotate -- see the rotate() function below
+        "rotate" => {
+            if args.len() !=2{
+                print_usage_and_exit();
+            }
+            let infile = args.remove(0);
+            let outfile = args.remove(0);
+            rotate(infile, outfile);            
+        }                
 
         // **OPTION**
         // Invert -- see the invert() function below
+        "invert" => {
+            if args.len() !=2{
+                print_usage_and_exit();
+            }
+            let infile = args.remove(0);
+            let outfile = args.remove(0);
+            invert(infile, outfile);            
+        }                
 
         // **OPTION**
         // Grayscale -- see the grayscale() function below
+        "grayscale" => {
+            if args.len() !=2{
+                print_usage_and_exit();
+            }
+            let infile = args.remove(0);
+            let outfile = args.remove(0);
+            grayscale(infile, outfile);            
+        }                
 
         // A VERY DIFFERENT EXAMPLE...a really fun one. :-)
         "fractal" => {
@@ -100,19 +144,47 @@ fn blur(infile: String, outfile: String) {
     // **OPTION**
     // Parse the blur amount (an f32) from the command-line and pass it through
     // to this function, instead of hard-coding it to 2.0.
-    let img2 = img.blur(2.0);
+
+    println!("Blur level (in f32): ");
+    io::stdout().flush().unwrap();
+
+
+    let mut input = String::new();
+
+    io::stdin()
+        .read_line(&mut input)
+        .expect("Failed to read input");
+
+    // let img2 = img.blur(2.0);
+    let blur_level : f32 = input.trim().parse().expect("Failed to parse number");
+    let img2 = img.blur(blur_level);
     // Here's how you save an image to a file.
     img2.save(outfile).expect("Failed writing OUTFILE.");
 }
 
 fn brighten(infile: String, outfile: String) {
     // See blur() for an example of how to open / save an image.
+    let img = image::open(infile).expect("Failed to open INFILE");
+
+    println!("Brightness level: ");
+    io::stdout().flush().unwrap();
+
+
+    let mut input = String::new();
+
+    io::stdin()
+        .read_line(&mut input)
+        .expect("Failed to read input");
 
     // .brighten() takes one argument, an i32.  Positive numbers brighten the
     // image. Negative numbers darken it.  It returns a new image.
+    let brightness_level : i32 = input.trim().parse().expect("Failed to parse a number");
+
 
     // Challenge: parse the brightness amount from the command-line and pass it
     // through to this function.
+    let img2 = img.brighten(brightness_level);
+    img2.save(outfile).expect("Failed writing OUTFILE");
 }
 
 fn crop(infile: String, outfile: String) {
@@ -125,6 +197,20 @@ fn crop(infile: String, outfile: String) {
     // through to this function.
 
     // See blur() for an example of how to save the image.
+    // See blur() for an example of how to open / save an image.
+    let mut img = image::open(infile).expect("Failed to open INFILE");
+
+    println!("This function takes four arguments x(u32), y(u32), width(u32), height(u32): ");
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    if args.is_empty() {
+        print_usage_and_exit();
+    }
+
+    let numbers: Vec<u32> = args.iter()
+                            .filter_map(|s| s.parse::<u32>().ok())
+                            .collect();
+    let img2 = img.crop(numbers[0], numbers[1], numbers[2], numbers[3]);
+    img2.save(outfile).expect("Failed writing OUTFILE");    
 }
 
 fn rotate(infile: String, outfile: String) {
@@ -140,6 +226,31 @@ fn rotate(infile: String, outfile: String) {
     // through to this function to select which method to call.
 
     // See blur() for an example of how to save the image.
+    let img = image::open(infile).expect("Failed to open INFILE");
+
+    println!("Choose between 3 options:");
+    println!("1. 90°");
+    println!("2. 180°");
+    println!("3. 270°");        
+    io::stdout().flush().unwrap();
+
+
+    let mut input = String::new();
+
+    io::stdin()
+        .read_line(&mut input)
+        .expect("Failed to read input");
+        
+    let img2: DynamicImage = match input.trim() {
+        "1" => img.rotate90(),
+        "2" => img.rotate180(),
+        "3" => img.rotate270(),
+        _ => {
+            eprintln!("Invalid option. Use 1, 2, or 3.");
+            std::process::exit(1);
+        }
+    };
+    img2.save(outfile).expect("Failed writing OUTFILE");        
 }
 
 fn invert(infile: String, outfile: String) {
@@ -149,6 +260,9 @@ fn invert(infile: String, outfile: String) {
     // will use the same image to save out to a different file.
 
     // See blur() for an example of how to save the image.
+    let mut img = image::open(infile).expect("Failed to open INFILE");    
+    img.invert();
+    img.save(outfile).expect("Failed writing OUTFILE");    
 }
 
 fn grayscale(infile: String, outfile: String) {
@@ -157,6 +271,9 @@ fn grayscale(infile: String, outfile: String) {
     // .grayscale() takes no arguments. It returns a new image.
 
     // See blur() for an example of how to save the image.
+    let img = image::open(infile).expect("Failed to open INFILE");    
+    let img2 = img.grayscale();
+    img2.save(outfile).expect("Failed writing OUTFILE");        
 }
 
 fn generate(outfile: String) {
